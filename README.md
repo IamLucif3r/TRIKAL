@@ -1,2 +1,4 @@
 # TRIKAL
-Threat Recon Intelligence : Knowledge, Automation &amp; Logistics
+Tactical Reconnaissance for Incident Knowledge, Analysis & Leaks
+
+
