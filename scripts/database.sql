@@ -9,3 +9,5 @@ CREATE TABLE IF NOT EXISTS articles (
     published_at TIMESTAMP,
     source TEXT
 );
+ALTER TABLE articles ADD COLUMN llm_score REAL DEFAULT 0;
+
