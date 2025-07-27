@@ -16,6 +16,7 @@ require (
 )
 
 require (
+	github.com/iamlucif3r/not1fy v0.0.0-20250718064630-94fed77f2807
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/mmcdole/gofeed v1.3.0
 	gopkg.in/yaml.v2 v2.4.0
