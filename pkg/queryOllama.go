@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 )
@@ -16,8 +17,8 @@ var (
 
 func QueryOllamaAPI(prompt string) (float64, error) {
 
-	payload := map[string]interface{}{
-		"model":  "llama3.2",
+	payload := map[string]any{
+		"model":  os.Getenv("LLM_MODEL"),
 		"prompt": prompt,
 		"stream": false,
 	}

@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/iamlucif3r/trikal/internal/database"
 	"github.com/iamlucif3r/trikal/internal/types"
 	"github.com/mmcdole/gofeed"
+	"gopkg.in/yaml.v2"
 )
 
 var cybersecurityKeywords = []string{
@@ -19,35 +21,43 @@ var cybersecurityKeywords = []string{
 }
 
 func FetchNews() error {
-	// var rssSources []string
+	var rssSources []string
 
-	// yamlFile, err := ioutil.ReadFile("rss.yaml")
-	// if err != nil {
-	// 	return fmt.Errorf("error loading 'rss.yaml' file : %v", err)
-	// }
+	yamlFile, err := ioutil.ReadFile("rss.yaml")
+	if err != nil {
+		return fmt.Errorf("error loading 'rss.yaml' file : %v", err)
+	}
 
-	// err = yaml.Unmarshal(yamlFile, &rssSources)
-	// if err != nil {
-	// 	return fmt.Errorf("error unmarshaling 'rss.yaml' file : %v", err)
-	// }
-	// var count int
-	// for _, url := range rssSources {
-	// 	log.Println("[INFO] Reading ", url, " to fetch news")
-	// 	count, err = fetchAndStoreFromURL(url)
-	// 	if err != nil {
-	// 		log.Printf("[Error] Error fetching news from %s: %v\n", url, err)
-	// 		continue
-	// 	}
-	// }
-	// log.Println("[SUCCESS] Fetched [", count, "]  articles successfully from RSS sources")
+	err = yaml.Unmarshal(yamlFile, &rssSources)
+	if err != nil {
+		return fmt.Errorf("error unmarshaling 'rss.yaml' file : %v", err)
+	}
 
-	// err = ScoreAllArticlesWithLLM()
-	// if err != nil {
-	// 	log.Printf("[Error] Error scoring articles with LLM: %v\n", err)
-	// }
+	db := database.DB
+	query := `DELETE FROM articles;`
+	_, err = db.Exec(query)
+	if err != nil {
+		return fmt.Errorf("failed to delete existing articles: %v", err)
+	}
+
+	var count int
+	for _, url := range rssSources {
+		log.Println("[INFO] Reading ", url, " to fetch news")
+		count, err = fetchAndStoreFromURL(url)
+		if err != nil {
+			log.Printf("[Error] Error fetching news from %s: %v\n", url, err)
+			continue
+		}
+	}
+	log.Println("[SUCCESS] Fetched [", count, "]  articles successfully from RSS sources")
+
+	err = ScoreAllArticlesWithLLM()
+	if err != nil {
+		log.Printf("[Error] Error scoring articles with LLM: %v\n", err)
+	}
 	webhookURL := os.Getenv("DISCORD_WEBHOOK_URL")
 
-	err := SendAlertToDiscord(webhookURL)
+	err = SendAlertToDiscord(webhookURL)
 	if err != nil {
 		log.Printf("[Error] Error sending top articles to Discord: %v\n", err)
 	}
