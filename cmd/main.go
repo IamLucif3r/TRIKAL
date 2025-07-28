@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/gin-gonic/gin"
 	"github.com/iamlucif3r/trikal/internal/config"
 	"github.com/iamlucif3r/trikal/internal/database"
 	"github.com/iamlucif3r/trikal/internal/types"
@@ -32,10 +33,21 @@ func init() {
 }
 func main() {
 	log.Println("TRIKAL is running with the following configuration : ")
+	router := gin.Default()
+	router.GET("/health", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Welcome to TRIKAL - Your Cybersecurity News Aggregator",
+		})
+	})
+	router.GET("/fetch-news", func(c *gin.Context) {
+		err := pkg.FetchNews()
+		if err != nil {
+			log.Printf("Error fetching news: %v\n", err)
+			c.JSON(500, gin.H{"error": "Failed to fetch news"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "News fetched successfully"})
+	})
+	router.Run(":3333")
 
-	err := pkg.FetchNews()
-	if err != nil {
-		log.Printf("Error fetching news: %v\n", err)
-		return
-	}
 }
