@@ -10,14 +10,42 @@ import (
 
 	"github.com/iamlucif3r/trikal/internal/database"
 	"github.com/iamlucif3r/trikal/internal/types"
+	"github.com/iamlucif3r/trikal/internal/utils"
 	"github.com/mmcdole/gofeed"
 	"gopkg.in/yaml.v2"
 )
 
 var cybersecurityKeywords = []string{
-	"exploit", "zero day", "vulnerability", "rce", "breach", "malware",
-	"phishing", "ransomware", "APT", "Critical", "CVE", "patch", "cyber attack",
-	"rootkit", "leak", "ddos", "security advisory", "mitre", "cisa", "cert",
+	// Vulnerabilities
+	"exploit", "zero day", "0day", "cve", "rce", "privesc", "ssrf", "sqli", "csrf",
+	"buffer overflow", "heap overflow", "oob", "unpatched", "vulnerability", "remote code execution", "command injection", "memory corruption", "deserialization",
+
+	// Malware
+	"malware", "ransomware", "rootkit", "trojan", "infostealer", "keylogger", "rat", "dropper", "loader", "botnet", "spyware", "wiper",
+
+	// Attack vectors
+	"phishing", "credential stuffing", "clickjacking", "drive-by", "watering hole", "dns poisoning", "man-in-the-middle", "session fixation", "token hijacking",
+
+	// Threat Actors
+	"APT", "nation state", "TA505", "APT29", "Lazarus", "UNC", "threat actor", "hacktivist", "group", "cobalt", "ransom group",
+
+	// Tooling
+	"metasploit", "cobalt strike", "brute ratel", "obfuscation", "beacon", "payload", "red team toolkit", "fud",
+
+	// Defensive
+	"edr", "siem", "xdr", "ioc", "ttp", "yara", "sigma", "sandbox", "telemetry", "mitre", "cisa", "cert", "analysis", "forensics", "hunting",
+
+	// Cloud
+	"aws", "azure", "gcp", "iam", "s3", "bucket", "cloud", "container", "kubernetes", "terraform", "cicd", "supply chain", "api gateway", "serverless",
+
+	// Impact
+	"breach", "data leak", "data breach", "extortion", "shutdown", "taken offline", "identity theft", "system crash",
+
+	// Advisory
+	"patch", "security advisory", "update", "fix released", "vendor advisory", "responsible disclosure", "embargo",
+
+	// Standards/Orgs
+	"nist", "mitre", "cisa", "owasp", "enisa", "pci", "soc2", "hipaa", "iso",
 }
 
 func FetchNews() error {
@@ -34,23 +62,25 @@ func FetchNews() error {
 	}
 
 	db := database.DB
+	log.Println("[INFO] Deleting existing articles from database")
 	query := `DELETE FROM articles;`
 	_, err = db.Exec(query)
 	if err != nil {
 		return fmt.Errorf("failed to delete existing articles: %v", err)
 	}
 
-	var count int
+	count := 0
 	for _, url := range rssSources {
 		log.Println("[INFO] Reading ", url, " to fetch news")
-		count, err = fetchAndStoreFromURL(url)
+		fetchedCount, err := fetchAndStoreFromURL(url)
 		if err != nil {
 			log.Printf("[Error] Error fetching news from %s: %v\n", url, err)
 			continue
 		}
+		count += fetchedCount
 	}
 	log.Println("[SUCCESS] Fetched [", count, "]  articles successfully from RSS sources")
-
+	count = 0
 	err = ScoreAllArticlesWithLLM()
 	if err != nil {
 		log.Printf("[Error] Error scoring articles with LLM: %v\n", err)
@@ -62,6 +92,7 @@ func FetchNews() error {
 		log.Printf("[Error] Error sending top articles to Discord: %v\n", err)
 	}
 
+	utils.TriggerSarjan()
 	return nil
 }
 
