@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	OllamaAPIURL = "http://localhost:11434/api/generate"
+	OllamaAPIURL = "http://host.docker.internal:11434/api/generate"
 )
 
 func QueryOllamaAPI(prompt string) (float64, error) {
