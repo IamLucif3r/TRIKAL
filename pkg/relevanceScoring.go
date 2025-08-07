@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"log"
 	"math"
 
 	"github.com/iamlucif3r/trikal/internal/database"
@@ -32,30 +33,48 @@ func GetAllArticles() ([]types.NewsItem, error) {
 
 func ScoreWithLLM(news types.NewsItem) (int, error) {
 	prompt := fmt.Sprintf(`
-	You are an expert cybersecurity content strategist, who creates for the following formats: 
-	a) Short, viral Reels or Memes for Instagram
-	b) In-depth and informative articles for Medium
-	c) Engaging, visual YouTube Videos (either weekly cybersecurity news digests, walkthroughs of new tools, or step-by-step deep dives into vulnerabilities/CVEs)
+	You are a cybersecurity educator and strategist building in-depth, high-value content for the brand "pwnspectrum".
 
-	Given the following news article:
+	You publish:
+	- YouTube explainers titled "How X Got Hacked"
+	- CVE walkthroughs with PoC, root cause, and exploitation details
+	- Medium articles that break down complex attacks or tools
+	- Educational reels summarizing attack chains and tricks
+
+	Given the news article:
 
 	Title: %s
 	Description: %s
 
-	Rate how well this article can be turned into HIGH-VALUE content for those platforms.
-	Consider:
+	Rate how suitable this article is to be turned into **a hands-on walkthrough, technical breakdown, or explanatory content**.
+	🔍 Ask yourself:
+	- Is this breaking news, or highly relatable for practitioners?
+	- Could it be a fun, shocking, or meme-worthy Reel?
+	- Could it be explored in depth in a Medium article with research and value?
+	- Could it be turned into an engaging YouTube story, walkthrough, or digest segment?
 
-	- Would this make a great, timely, or viral REEL or meme (shocking, funny, quick insight, shareable)?
-	- Does it offer enough depth, context, or new info for a full Medium ARTICLE?
-	- Is it suitable for a YOUTUBE VIDEO -- either as part of a weekly news roundup, a hands-on walkthrough for a new tool/technique, or a detailed exploration of a trending vulnerability or CVE?
+	Prioritize:
+	✅ Real-world incidents (breaches, new techniques, active campaigns)
+	✅ New vulnerabilities or CVEs (especially with PoCs or attack details)
+	✅ Multi-stage attacks or phishing tactics that can be explained visually
+	✅ Anything that shows *how* something works or broke
 
-	Score from 0 (not useful for any format as content) to 10 (amazing: perfect for Reels, Medium articles, and/or engaging videos).
+	❌ Ignore purely corporate press releases, product announcements, or vague threat alerts with no technical meat.
 
-	Output ONLY a single integer or decimal number (e.g., 8 or 8.5), nothing else. Do NOT say "out of 10" or add any label.
-`, news.Title, news.Description)
+	Score from 0 (useless for content) to 10 (perfect for technical breakdown or teaching).
+
+	💡 Imagine you're selecting top content out of 100 headlines this week.
+	Only **10 headlines should score 9 or 10.**
+	Score high ONLY when it's truly 🔥 — unique, timely, and rich in content.
+
+	🎯 Score high ONLY if it can become a **great "How X Got Hacked" video, CVE walkthrough, or research-backed article**.
+
+	Return ONLY a single number, no text, no comments, no formatting.
+	`, news.Title, news.Description)
 
 	scoreStr, err := QueryOllamaAPI(prompt)
 	if err != nil {
+		log.Println("Error Querying Ollama API: ", err)
 		return 0, err
 	}
 	scoreRoundoff := int(math.Ceil(float64(scoreStr)))
