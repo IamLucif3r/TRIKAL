@@ -1,13 +1,21 @@
 
 -- ARTICLES ITEMS TABLE
 
-CREATE TABLE IF NOT EXISTS articles (
+CREATE TABLE news_items (
     id SERIAL PRIMARY KEY,
-    title TEXT,
+    title TEXT NOT NULL,
     description TEXT,
-    link TEXT UNIQUE,
+    url TEXT,
+    source TEXT,
     published_at TIMESTAMP,
-    source TEXT
+    -- LLM scoring metadata
+    timeliness_score INT,
+    actionability_score INT,
+    explainability_score INT,
+    security_relevance_score INT,
+    depth_score INT,
+    final_score FLOAT,
+    created_at TIMESTAMP DEFAULT NOW()
 );
-ALTER TABLE articles ADD COLUMN llm_score REAL DEFAULT 0;
+
 
